@@ -99,10 +99,7 @@
                 <i data-feather="x-circle"></i>
                 <span class="nav-text ml-3">Commandes rejetées</span>
             </div>
-            <div class="px-4 py-2 hover:bg-blue-700 cursor-pointer flex items-center" onclick="logout()">
-                <i data-feather="log-out"></i>
-                <span class="nav-text ml-3">Déconnexion</span>
-            </div>
+          
         </nav>
     </div>
 
@@ -230,10 +227,7 @@
                         <option value="Lubrifiants">Lubrifiants</option>
                         <option value="Accessoires">Accessoires</option>
                     </select>
-                    <div class="relative">
-                        <input type="text" id="product-search" placeholder="Rechercher..." class="border border-gray-300 rounded px-3 py-2 pl-10">
-                        <i data-feather="search" class="absolute left-3 top-3 text-gray-400"></i>
-                    </div>
+                   
                 </div>
             </div>
 
@@ -353,9 +347,7 @@
         <div id="completed-orders" class="page hidden">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-3xl font-bold text-blue-800">Commandes validées</h1>
-                <button onclick="downloadCompletedOrders()" class="px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-700 flex items-center">
-                    <i data-feather="download" class="mr-2"></i> Télécharger PDF
-                </button>
+                
             </div>
             
             <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -1074,12 +1066,10 @@
                     });
             });
         }
-
         function deleteOrder(orderId) {
             if (confirm('Êtes-vous sûr de vouloir supprimer cette commande?')) {
                 db.collection('orders').doc(orderId).delete()
                     .then(() => {
-                        alert('Commande supprimée avec succès!');
                         closeOrderDetailModal();
                         loadOrders();
                         loadCompletedOrders();
@@ -1088,7 +1078,6 @@
                     })
                     .catch((error) => {
                         console.error("Error deleting order: ", error);
-                        alert('Erreur lors de la suppression de la commande');
                     });
             }
         }
