@@ -86,10 +86,7 @@
                 <i data-feather="package"></i>
                 <span class="nav-text ml-3">Produits</span>
             </div>
-            <div class="px-4 py-2 hover:bg-blue-700 cursor-pointer flex items-center" onclick="showPage('add-product')">
-                <i data-feather="plus-circle"></i>
-                <span class="nav-text ml-3">Ajouter un produit</span>
-            </div>
+      
             <div class="px-4 py-2 hover:bg-blue-700 cursor-pointer flex items-center" onclick="showPage('orders')">
                 <i data-feather="shopping-cart"></i>
                 <span class="nav-text ml-3">Commandes</span>
@@ -117,9 +114,7 @@
         <button onclick="showPage('products')" class="p-2 text-blue-800">
             <i data-feather="package"></i>
         </button>
-        <button onclick="showPage('add-product')" class="p-2 text-blue-800">
-            <i data-feather="plus-circle"></i>
-        </button>
+    
         <button onclick="showPage('orders')" class="p-2 text-blue-800">
             <i data-feather="shopping-cart"></i>
         </button>
@@ -1058,7 +1053,6 @@
             })
             .catch((error) => {
                 console.error("Error updating order status: ", error);
-                alert('Erreur lors de la mise à jour du statut de la commande');
             });
         }
 
