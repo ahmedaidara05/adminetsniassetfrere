@@ -257,8 +257,11 @@
             <h1 class="text-3xl font-bold text-blue-800 mb-6">Ajouter un produit</h1>
             
             <div class="bg-white p-6 rounded-lg shadow">
-                <form id="product-form">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <form id="product-form">
+    <!-- Champ caché pour l'ID du produit -->
+    <input type="hidden" id="product-id" value="">
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 mb-2" for="product-name">Nom du produit</label>
@@ -494,28 +497,31 @@
         let currentInvoice = null;
 
         // Initialize the app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            feather.replace();
-            AOS.init();
-            
-            // Check if user is logged in (you can implement your own auth system)
-            checkAuth();
-            
-            // Load data
-            loadProducts();
-            loadOrders();
-            loadCompletedOrders();
-            loadRejectedOrders();
-            
-            // Setup event listeners
-            document.getElementById('product-form').addEventListener('submit', saveProduct);
-            document.getElementById('product-image').addEventListener('change', updateImagePreview);
-            document.getElementById('category-filter').addEventListener('change', filterProducts);
-            document.getElementById('product-search').addEventListener('input', searchProducts);
-            
-            // Show dashboard by default
-            showPage('dashboard');
-        });
+      document.addEventListener('DOMContentLoaded', function() {
+    feather.replace();
+    AOS.init();
+    
+    // Check if user is logged in (you can implement your own auth system)
+    checkAuth();
+    
+    // Initialiser les graphiques avec des données vides
+    initializeCharts();
+    
+    // Load data
+    loadProducts();
+    loadOrders();
+    loadCompletedOrders();
+    loadRejectedOrders();
+    
+    // Setup event listeners
+    document.getElementById('product-form').addEventListener('submit', saveProduct);
+    document.getElementById('product-image').addEventListener('change', updateImagePreview);
+    document.getElementById('category-filter').addEventListener('change', filterProducts);
+    document.getElementById('product-search').addEventListener('input', searchProducts);
+    
+    // Show dashboard by default
+    showPage('dashboard');
+});
 
         // Navigation functions
         function toggleSidebar() {
@@ -542,17 +548,20 @@
             }
             
             // Refresh data if needed
-            if (pageId === 'dashboard') {
-                updateDashboard();
-            } else if (pageId === 'products') {
-                loadProducts();
-            } else if (pageId === 'orders') {
-                loadOrders();
-            } else if (pageId === 'completed-orders') {
-                loadCompletedOrders();
-            } else if (pageId === 'rejected-orders') {
-                loadRejectedOrders();
-            }
+           // Refresh data if needed
+if (pageId === 'dashboard') {
+    // Réinitialiser les graphiques avant de mettre à jour
+    initializeCharts();
+    updateDashboard();
+} else if (pageId === 'products') {
+    loadProducts();
+} else if (pageId === 'orders') {
+    loadOrders();
+} else if (pageId === 'completed-orders') {
+    loadCompletedOrders();
+} else if (pageId === 'rejected-orders') {
+    loadRejectedOrders();
+}
         }
 
         function checkAuth() {
@@ -1333,118 +1342,222 @@
             }
         }
 
-        function updateCharts() {
-            // Sales by category chart
-            const categoryData = {};
-            completedOrders.forEach(order => {
-                order.items.forEach(item => {
-                    const category = item.category || 'Autre';
-                    categoryData[category] = (categoryData[category] || 0) + (item.price * item.quantity);
-                });
-            });
+      function updateCharts() {
+    // Vérifier si les éléments canvas existent
+    if (!document.getElementById('categoryChart') || !document.getElementById('salesChart')) {
+        console.log("Les graphiques ne sont pas encore disponibles sur cette page");
+        return;
+    }
+    
+    // 1. Graphique des ventes par catégorie - CORRIGÉ
+    const categoryData = {};
+    
+    // Parcourir toutes les commandes validées
+    completedOrders.forEach(order => {
+        order.items.forEach(item => {
+            // Utiliser la catégorie du produit, ou chercher dans les produits si non définie
+            let category = item.category;
             
-            const categoryLabels = Object.keys(categoryData);
-            const categoryValues = Object.values(categoryData);
-            
-            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-            if (window.categoryChart) {
-                window.categoryChart.destroy();
+            // Si la catégorie n'est pas dans l'item, chercher dans la liste des produits
+            if (!category) {
+                const product = products.find(p => p.id === item.id);
+                category = product ? product.category : 'Non catégorisé';
             }
             
-            window.categoryChart = new Chart(categoryCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: categoryLabels,
-                    datasets: [{
-                        data: categoryValues,
-                        backgroundColor: [
-                            '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
-                            '#EC4899', '#14B8A6', '#F97316', '#64748B', '#A855F7'
-                        ],
-                        borderWidth: 1
-                    }]
+            // S'assurer que la catégorie n'est pas vide
+            category = category || 'Non catégorisé';
+            
+            // Ajouter au total de la catégorie
+            categoryData[category] = (categoryData[category] || 0) + (item.price * item.quantity);
+        });
+    });
+    
+    // Si aucune donnée, afficher un message
+    if (Object.keys(categoryData).length === 0) {
+        categoryData['Aucune vente'] = 1;
+    }
+    
+    const categoryLabels = Object.keys(categoryData);
+    const categoryValues = Object.values(categoryData);
+    
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    
+    // Détruire le graphique existant s'il existe
+    if (window.categoryChart) {
+        window.categoryChart.destroy();
+    }
+    
+    window.categoryChart = new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                data: categoryValues,
+                backgroundColor: [
+                    '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
+                    '#EC4899', '#14B8A6', '#F97316', '#64748B', '#A855F7',
+                    '#FF6B6B', '#4ECDC4', '#45B7D1', '#F9A1BC', '#9EE6CF'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.raw || 0;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = Math.round((value / total) * 100);
-                                    return `${label}: ${parseInt(value).toLocaleString()} FCFA (${percentage}%)`;
-                                }
-                            }
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: ${parseInt(value).toLocaleString()} FCFA (${percentage}%)`;
                         }
                     }
                 }
-            });
-            
-            // Sales over time chart (last 30 days)
-            const salesData = {};
-            const today = new Date();
-            const last30Days = new Date(today.setDate(today.getDate() - 30));
-            
-            completedOrders
-                .filter(order => new Date(order.date) >= last30Days)
-                .forEach(order => {
-                    const date = new Date(order.date).toLocaleDateString();
-                    salesData[date] = (salesData[date] || 0) + order.total;
-                });
-            
-            const salesLabels = Object.keys(salesData).sort((a, b) => new Date(a) - new Date(b));
-            const salesValues = salesLabels.map(date => salesData[date]);
-            
-            const salesCtx = document.getElementById('salesChart').getContext('2d');
-            if (window.salesChart) {
-                window.salesChart.destroy();
             }
-            
-            window.salesChart = new Chart(salesCtx, {
-                type: 'line',
-                data: {
-                    labels: salesLabels,
-                    datasets: [{
-                        label: 'Ventes (FCFA)',
-                        data: salesValues,
-                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                        borderColor: 'rgba(59, 130, 246, 1)',
-                        borderWidth: 2,
-                        tension: 0.1,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return parseInt(value).toLocaleString() + ' FCFA';
-                                }
-                            }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return parseInt(context.raw).toLocaleString() + ' FCFA';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
         }
+    });
+    
+    // 2. Graphique d'évolution des ventes - CORRIGÉ
+    const salesData = {};
+    const today = new Date();
+    const last30Days = new Date();
+    last30Days.setDate(today.getDate() - 30);
+    
+    // Regrouper par jour toutes les commandes des 30 derniers jours
+    completedOrders
+        .filter(order => new Date(order.date) >= last30Days)
+        .forEach(order => {
+            const dateKey = new Date(order.date).toLocaleDateString('fr-FR');
+            salesData[dateKey] = (salesData[dateKey] || 0) + order.total;
+        });
+    
+    // Créer un tableau pour les 30 derniers jours même sans données
+    const allDates = [];
+    for (let i = 29; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        allDates.push(date.toLocaleDateString('fr-FR'));
+    }
+    
+    // Associer les données aux dates
+    const salesLabels = allDates;
+    const salesValues = allDates.map(date => salesData[date] || 0);
+    
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    
+    // Détruire le graphique existant s'il existe
+    if (window.salesChart) {
+        window.salesChart.destroy();
+    }
+    
+    window.salesChart = new Chart(salesCtx, {
+        type: 'line',
+        data: {
+            labels: salesLabels,
+            datasets: [{
+                label: 'Ventes (FCFA)',
+                data: salesValues,
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 2,
+                tension: 0.1,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return parseInt(value).toLocaleString() + ' FCFA';
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return parseInt(context.raw).toLocaleString() + ' FCFA';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    console.log("Graphiques mis à jour:", {
+        categories: categoryData,
+        sales: salesData
+    });
+}
+      
+      function initializeCharts() {
+    // Vérifier si les graphiques existent sur la page
+    if (!document.getElementById('categoryChart') || !document.getElementById('salesChart')) {
+        return;
+    }
+    
+    // Créer des graphiques vides en attendant les données réelles
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    window.categoryChart = new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Chargement...'],
+            datasets: [{
+                data: [1],
+                backgroundColor: ['#f3f4f6'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right' }
+            }
+        }
+    });
+    
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    window.salesChart = new Chart(salesCtx, {
+        type: 'line',
+        data: {
+            labels: ['Chargement...'],
+            datasets: [{
+                label: 'Ventes (FCFA)',
+                data: [0],
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 2,
+                tension: 0.1,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
     </script>
 </body>
 </html>
