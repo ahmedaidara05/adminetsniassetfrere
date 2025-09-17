@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETS NIASS & FRÈRE - Pièces détachées véhicules</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <style>
+        /* Custom styles */
+        .sidebar {
+            transition: all 0.3s;
+        }
+        .sidebar.collapsed {
+            width: 80px;
+        }
+        .sidebar.collapsed .nav-text {
+            display: none;
+        }
+        .sidebar.collapsed .logo-text {
+            display: none;
+        }
+        .main-content {
+            transition: margin-left 0.3s;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .sidebar.collapsed {
+                width: 100%;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .nav-bottom {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: white;
+                z-index: 1000;
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            }
+        }
+        .product-image {
+            height: 200px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Sidebar Navigation -->
+    <div class="sidebar fixed left-0 top-0 bottom-0 w-64 bg-blue-800 text-white shadow-lg z-10">
+        <div class="p-4 flex items-center justify-between border-b border-blue-700">
+            <div class="flex items-center">
+                <img src="https://via.placeholder.com/50" alt="Logo" class="h-10 w-10 rounded-full">
+                <span class="logo-text ml-3 font-bold text-xl">ETS NIASS & FRÈRE</span>
+            </div>
+            <button onclick="toggleSidebar()" class="text-white focus:outline-none">
+                <i data-feather="chevron-left"></i>
+            </button>
+        </div>
+        <nav class="mt-6">
+            <div class="px-4 py-2 hover:bg-blue-700 cursor-pointer flex items-center" onclick="showPage('dashboard')">
+                <i data-feather="home"></i>
+                <span class="nav-text ml-3">Tableau de bord</span>
+            </div>
+            <div class="px-4 py-2 hover:bg-blue-700 cursor-pointer flex items-center" onclick="showPage('products')">
+                <i data-feather="package"></i>
+                <span class="nav-text ml-3">Produits</span>
+            </div>
+            <div class="px-4 py-2 hover:bg-blue-700 cursor-pointer flex items-center" onclick="showPage('add-product')">
+                <i data-feather="plus-circle"></i>
+                <span class="nav-text ml-3">Ajouter un produit</span>
+            </div>
+            <div class="px-4 py-2 hover:bg-blue-700 cursor-pointer flex items-center" onclick="showPage('orders')">
+                <i data-feather="shopping-cart"></i>
+                <span class="nav-text ml-3">Commandes</span>
+            </div>
+            <div class="px-4 py-2 hover:bg-blue-700 cursor-pointer flex items-center" onclick="showPage('completed-orders')">
+                <i data-feather="check-circle"></i>
+                <span class="nav-text ml-3">Commandes validées</span>
+            </div>
+            <div class="px-4 py-2 hover:bg-blue-700 cursor-pointer flex items-center" onclick="showPage('rejected-orders')">
+                <i data-feather="x-circle"></i>
+                <span class="nav-text ml-3">Commandes rejetées</span>
+            </div>
+            <div class="px-4 py-2 hover:bg-blue-700 cursor-pointer flex items-center" onclick="logout()">
+                <i data-feather="log-out"></i>
+                <span class="nav-text ml-3">Déconnexion</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="nav-bottom md:hidden flex justify-around items-center py-3">
+        <button onclick="showPage('dashboard')" class="p-2 text-blue-800">
+            <i data-feather="home"></i>
+        </button>
+        <button onclick="showPage('products')" class="p-2 text-blue-800">
+            <i data-feather="package"></i>
+        </button>
+        <button onclick="showPage('add-product')" class="p-2 text-blue-800">
+            <i data-feather="plus-circle"></i>
+        </button>
+        <button onclick="showPage('orders')" class="p-2 text-blue-800">
+            <i data-feather="shopping-cart"></i>
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content ml-64 p-6 min-h-screen">
+        <!-- Dashboard Page -->
+        <div id="dashboard" class="page">
+            <h1 class="text-3xl font-bold text-blue-800 mb-6">Tableau de bord</h1>
+            
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-blue-100 text-blue-800 mr-4">
+                            <i data-feather="shopping-cart"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Commandes en attente</p>
+                            <h3 class="text-2xl font-bold" id="pending-orders-count">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100 text-green-800 mr-4">
+                            <i data-feather="check-circle"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Commandes validées</p>
+                            <h3 class="text-2xl font-bold" id="completed-orders-count">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-yellow-100 text-yellow-800 mr-4">
+                            <i data-feather="package"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Articles en stock</p>
+                            <h3 class="text-2xl font-bold" id="total-stock-count">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-purple-100 text-purple-800 mr-4">
+                            <i data-feather="dollar-sign"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Chiffre d'affaires</p>
+                            <h3 class="text-2xl font-bold" id="total-revenue">0 FCFA</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold mb-4">Ventes par catégorie</h3>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold mb-4">Évolution des ventes</h3>
+                    <div class="chart-container">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Orders -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-semibold mb-4">Dernières commandes</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N° Commande</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="recent-orders">
+                            <!-- Will be filled by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Page -->
+        <div id="products" class="page hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold text-blue-800">Produits</h1>
+                <div class="flex space-x-2">
+                    <select id="category-filter" class="border border-gray-300 rounded px-3 py-2">
+                        <option value="">Toutes catégories</option>
+                        <option value="Moteur">Moteur</option>
+                        <option value="Freinage">Freinage</option>
+                        <option value="Transmission">Transmission</option>
+                        <option value="Suspension">Suspension</option>
+                        <option value="Échappement">Échappement</option>
+                        <option value="Électricité">Électricité</option>
+                        <option value="Carrosserie">Carrosserie</option>
+                        <option value="Intérieur">Intérieur</option>
+                        <option value="Lubrifiants">Lubrifiants</option>
+                        <option value="Accessoires">Accessoires</option>
+                    </select>
+                    <div class="relative">
+                        <input type="text" id="product-search" placeholder="Rechercher..." class="border border-gray-300 rounded px-3 py-2 pl-10">
+                        <i data-feather="search" class="absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Catégorie</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="products-list">
+                            <!-- Will be filled by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Product Page -->
+        <div id="add-product" class="page hidden">
+            <h1 class="text-3xl font-bold text-blue-800 mb-6">Ajouter un produit</h1>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <form id="product-form">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 mb-2" for="product-name">Nom du produit</label>
+                                <input type="text" id="product-name" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 mb-2" for="product-category">Catégorie</label>
+                                <select id="product-category" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                    <option value="">Sélectionnez une catégorie</option>
+                                    <option value="Moteur">Moteur</option>
+                                    <option value="Freinage">Freinage</option>
+                                    <option value="Transmission">Transmission</option>
+                                    <option value="Suspension">Suspension</option>
+                                    <option value="Échappement">Échappement</option>
+                                    <option value="Électricité">Électricité</option>
+                                    <option value="Carrosserie">Carrosserie</option>
+                                    <option value="Intérieur">Intérieur</option>
+                                    <option value="Lubrifiants">Lubrifiants</option>
+                                    <option value="Accessoires">Accessoires</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 mb-2" for="product-brand">Marque véhicule</label>
+                                <input type="text" id="product-brand" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 mb-2" for="product-model">Modèle véhicule</label>
+                                <input type="text" id="product-model" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 mb-2" for="product-price">Prix (FCFA)</label>
+                                <input type="number" id="product-price" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 mb-2" for="product-stock">Stock disponible</label>
+                                <input type="number" id="product-stock" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 mb-2" for="product-image">Image (URL PostImage)</label>
+                                <input type="text" id="product-image" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                <div class="mt-2">
+                                    <img id="image-preview" src="" alt="Aperçu de l'image" class="product-image hidden border rounded">
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 mb-2" for="product-description">Description</label>
+                                <textarea id="product-description" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-4 mt-6">
+                        <button type="button" onclick="resetProductForm()" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100">Annuler</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-700">Ajouter le produit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Orders Page -->
+        <div id="orders" class="page hidden">
+            <h1 class="text-3xl font-bold text-blue-800 mb-6">Commandes en attente</h1>
+            
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N° Commande</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="orders-list">
+                            <!-- Will be filled by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Orders Page -->
+        <div id="completed-orders" class="page hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold text-blue-800">Commandes validées</h1>
+                <button onclick="downloadCompletedOrders()" class="px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-700 flex items-center">
+                    <i data-feather="download" class="mr-2"></i> Télécharger PDF
+                </button>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N° Commande</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Facture</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="completed-orders-list">
+                            <!-- Will be filled by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rejected Orders Page -->
+        <div id="rejected-orders" class="page hidden">
+            <h1 class="text-3xl font-bold text-blue-800 mb-6">Commandes rejetées</h1>
+            
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N° Commande</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="rejected-orders-list">
+                            <!-- Will be filled by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Detail Modal -->
+        <div id="order-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-screen overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-blue-800" id="order-detail-title">Détails de la commande</h2>
+                        <button onclick="closeOrderDetailModal()" class="text-gray-500 hover:text-gray-700">
+                            <i data-feather="x"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <h3 class="text-lg font-semibold mb-2">Informations client</h3>
+                            <div class="bg-gray-50 p-4 rounded">
+                                <p id="customer-name"></p>
+                                <p id="customer-phone"></p>
+                                <p id="customer-email"></p>
+                                <p id="customer-address"></p>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-2">Informations commande</h3>
+                            <div class="bg-gray-50 p-4 rounded">
+                                <p><strong>N° Commande:</strong> <span id="order-number"></span></p>
+                                <p><strong>Date:</strong> <span id="order-date"></span></p>
+                                <p><strong>Statut:</strong> <span id="order-status"></span></p>
+                                <p><strong>Total:</strong> <span id="order-total"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-lg font-semibold mb-2">Articles commandés</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix unitaire</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantité</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="order-items">
+                                <!-- Will be filled by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="flex justify-end mt-6 space-x-4" id="order-actions">
+                        <!-- Will be filled by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoice Modal -->
+        <div id="invoice-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-screen overflow-y-auto">
+                <div class="p-6" id="invoice-content">
+                    <!-- Invoice content will be generated here -->
+                </div>
+                <div class="p-4 border-t flex justify-end">
+                    <button onclick="downloadInvoice()" class="px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-700 flex items-center mr-2">
+                        <i data-feather="download" class="mr-2"></i> Télécharger
+                    </button>
+                    <button onclick="closeInvoiceModal()" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100">
+                        Fermer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+         // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCX1Q0i-L33RNZIVsJ8V1iRsDY6CJm1Lmc",
+            authDomain: "gmbn-9ba54.firebaseapp.com",
+            projectId: "gmbn-9ba54",
+            storageBucket: "gmbn-9ba54.firebasestorage.app",
+            messagingSenderId: "968684169673",
+            appId: "1:968684169673:web:d6b2796b396f8e62eda018",
+            measurementId: "G-MQXSQQQHBC"
+        };
+
+        // Initialiser Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const { jsPDF } = window.jspdf;
+
+        // Global variables
+        let products = [];
+        let orders = [];
+        let completedOrders = [];
+        let rejectedOrders = [];
+        let currentOrder = null;
+        let currentInvoice = null;
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            feather.replace();
+            AOS.init();
+            
+            // Check if user is logged in (you can implement your own auth system)
+            checkAuth();
+            
+            // Load data
+            loadProducts();
+            loadOrders();
+            loadCompletedOrders();
+            loadRejectedOrders();
+            
+            // Setup event listeners
+            document.getElementById('product-form').addEventListener('submit', saveProduct);
+            document.getElementById('product-image').addEventListener('change', updateImagePreview);
+            document.getElementById('category-filter').addEventListener('change', filterProducts);
+            document.getElementById('product-search').addEventListener('input', searchProducts);
+            
+            // Show dashboard by default
+            showPage('dashboard');
+        });
+
+        // Navigation functions
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('collapsed');
+            document.querySelector('.main-content').classList.toggle('ml-64');
+            document.querySelector('.main-content').classList.toggle('ml-20');
+            feather.replace();
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.add('hidden');
+            });
+            document.getElementById(pageId).classList.remove('hidden');
+            
+            // Update active nav item
+            document.querySelectorAll('.sidebar nav div').forEach(item => {
+                item.classList.remove('bg-blue-700');
+            });
+            
+            if (pageId !== 'dashboard') {
+                const navItem = document.querySelector(`.sidebar nav div[onclick="showPage('${pageId}')"]`);
+                if (navItem) navItem.classList.add('bg-blue-700');
+            }
+            
+            // Refresh data if needed
+            if (pageId === 'dashboard') {
+                updateDashboard();
+            } else if (pageId === 'products') {
+                loadProducts();
+            } else if (pageId === 'orders') {
+                loadOrders();
+            } else if (pageId === 'completed-orders') {
+                loadCompletedOrders();
+            } else if (pageId === 'rejected-orders') {
+                loadRejectedOrders();
+            }
+        }
+
+        function checkAuth() {
+            // Implement your own authentication check
+            // For demo purposes, we'll assume user is always authenticated
+        }
+
+        function logout() {
+            // Implement logout functionality
+            window.location.href = 'login.html';
+        }
+
+        // Product functions
+        function loadProducts() {
+            db.collection('products').get().then((querySnapshot) => {
+                products = [];
+                querySnapshot.forEach((doc) => {
+                    products.push({ id: doc.id, ...doc.data() });
+                });
+                displayProducts();
+                updateDashboard();
+            }).catch((error) => {
+                console.error("Error loading products: ", error);
+            });
+        }
+
+        function displayProducts() {
+            const container = document.getElementById('products-list');
+            container.innerHTML = '';
+            
+            if (products.length === 0) {
+                container.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Aucun produit trouvé</td></tr>';
+                return;
+            }
+            
+            products.forEach(product => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <img src="${product.image}" alt="${product.name}" class="h-10 w-10 rounded-full">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${product.name}</div>
+                        <div class="text-sm text-gray-500">${product.brand} ${product.model}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                            ${product.category}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${parseInt(product.price).toLocaleString()} FCFA
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${product.stock}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="editProduct('${product.id}')" class="text-blue-600 hover:text-blue-900 mr-3">Modifier</button>
+                        <button onclick="deleteProduct('${product.id}')" class="text-red-600 hover:text-red-900">Supprimer</button>
+                    </td>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function filterProducts() {
+            const category = document.getElementById('category-filter').value;
+            const searchTerm = document.getElementById('product-search').value.toLowerCase();
+            
+            let filteredProducts = products;
+            
+            if (category) {
+                filteredProducts = filteredProducts.filter(product => product.category === category);
+            }
+            
+            if (searchTerm) {
+                filteredProducts = filteredProducts.filter(product => 
+                    product.name.toLowerCase().includes(searchTerm) || 
+                    product.brand.toLowerCase().includes(searchTerm) ||
+                    product.model.toLowerCase().includes(searchTerm) ||
+                    product.category.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            displayFilteredProducts(filteredProducts);
+        }
+
+        function searchProducts() {
+            filterProducts();
+        }
+
+        function displayFilteredProducts(filteredProducts) {
+            const container = document.getElementById('products-list');
+            container.innerHTML = '';
+            
+            if (filteredProducts.length === 0) {
+                container.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Aucun produit trouvé</td></tr>';
+                return;
+            }
+            
+            filteredProducts.forEach(product => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <img src="${product.image}" alt="${product.name}" class="h-10 w-10 rounded-full">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${product.name}</div>
+                        <div class="text-sm text-gray-500">${product.brand} ${product.model}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                            ${product.category}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${parseInt(product.price).toLocaleString()} FCFA
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${product.stock}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="editProduct('${product.id}')" class="text-blue-600 hover:text-blue-900 mr-3">Modifier</button>
+                        <button onclick="deleteProduct('${product.id}')" class="text-red-600 hover:text-red-900">Supprimer</button>
+                    </td>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function updateImagePreview() {
+            const imageUrl = document.getElementById('product-image').value;
+            const preview = document.getElementById('image-preview');
+            
+            if (imageUrl) {
+                preview.src = imageUrl;
+                preview.classList.remove('hidden');
+            } else {
+                preview.classList.add('hidden');
+            }
+        }
+
+      function saveProduct(e) {
+    e.preventDefault();
+    
+    const productId = document.getElementById('product-id').value;
+    const name = document.getElementById('product-name').value;
+    const category = document.getElementById('product-category').value;
+    const brand = document.getElementById('product-brand').value;
+    const model = document.getElementById('product-model').value;
+    const price = document.getElementById('product-price').value;
+    const stock = document.getElementById('product-stock').value;
+    const image = document.getElementById('product-image').value;
+    const description = document.getElementById('product-description').value;
+    
+    // Validation des champs obligatoires
+    if (!name || !category || !brand || !model || !price || !stock || !image) {
+        alert('Veuillez remplir tous les champs obligatoires');
+        return;
+    }
+    
+    const productData = {
+        name,
+        category,
+        brand,
+        model,
+        price: parseFloat(price),
+        stock: parseInt(stock),
+        image,
+        description,
+        updatedAt: new Date().toISOString()
+    };
+    
+    if (productId) {
+        // Update existing product
+        db.collection('products').doc(productId).update(productData)
+            .then(() => {
+                alert('Produit mis à jour avec succès!');
+                resetProductForm();
+                loadProducts();
+                showPage('products'); // Rediriger vers la liste des pro duits
+            })
+            .catch((error) => {
+                console.error("Error updating product: ", error);
+                alert('Erreur lors de la mise à jour du produit');
+            });
+    } else {
+        // Add creation date for new products
+        productData.createdAt = new Date().toISOString();
+        
+        // Add new product
+        db.collection('products').add(productData)
+            .then(() => {
+                alert('Produit ajouté avec succès!');
+                resetProductForm();
+                loadProducts();
+                showPage('products'); // Rediriger vers la liste des produits
+            })
+            .catch((error) => {
+                console.error("Error adding product: ", error);
+                alert('Erreur lors de l\'ajout du produit');
+            });
+    }
+}
+
+        function editProduct(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            document.getElementById('product-id').value = product.id;
+            document.getElementById('product-name').value = product.name;
+            document.getElementById('product-category').value = product.category;
+            document.getElementById('product-brand').value = product.brand;
+            document.getElementById('product-model').value = product.model;
+            document.getElementById('product-price').value = product.price;
+            document.getElementById('product-stock').value = product.stock;
+            document.getElementById('product-image').value = product.image;
+            document.getElementById('product-description').value = product.description;
+            
+            updateImagePreview();
+            showPage('add-product');
+            
+            // Change button text
+            document.querySelector('#product-form button[type="submit"]').textContent = 'Mettre à jour';
+        }
+
+        function deleteProduct(productId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce produit?')) {
+                db.collection('products').doc(productId).delete()
+                    .then(() => {
+                        alert('Produit supprimé avec succès!');
+                        loadProducts();
+                    })
+                    .catch((error) => {
+                        console.error("Error deleting product: ", error);
+                        alert('Erreur lors de la suppression du produit');
+                    });
+            }
+        }
+
+        function resetProductForm() {
+            document.getElementById('product-form').reset();
+            document.getElementById('product-id').value = '';
+            document.getElementById('image-preview').classList.add('hidden');
+            document.querySelector('#product-form button[type="submit"]').textContent = 'Ajouter le produit';
+        }
+
+        // Order functions
+        function loadOrders() {
+            db.collection('orders').where('status', '==', 'pending').get().then((querySnapshot) => {
+                orders = [];
+                querySnapshot.forEach((doc) => {
+                    orders.push({ id: doc.id, ...doc.data() });
+                });
+                displayOrders();
+                updateDashboard();
+            }).catch((error) => {
+                console.error("Error loading orders: ", error);
+            });
+        }
+
+        function loadCompletedOrders() {
+            db.collection('orders').where('status', '==', 'completed').get().then((querySnapshot) => {
+                completedOrders = [];
+                querySnapshot.forEach((doc) => {
+                    completedOrders.push({ id: doc.id, ...doc.data() });
+                });
+                displayCompletedOrders();
+                updateDashboard();
+            }).catch((error) => {
+                console.error("Error loading completed orders: ", error);
+            });
+        }
+
+        function loadRejectedOrders() {
+            db.collection('orders').where('status', '==', 'rejected').get().then((querySnapshot) => {
+                rejectedOrders = [];
+                querySnapshot.forEach((doc) => {
+                    rejectedOrders.push({ id: doc.id, ...doc.data() });
+                });
+                displayRejectedOrders();
+                updateDashboard();
+            }).catch((error) => {
+                console.error("Error loading rejected orders: ", error);
+            });
+        }
+
+        function displayOrders() {
+            const container = document.getElementById('orders-list');
+            container.innerHTML = '';
+            
+            if (orders.length === 0) {
+                container.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Aucune commande en attente</td></tr>';
+                return;
+            }
+            
+            orders.forEach(order => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${order.orderNumber || order.id.substring(0, 8)}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${order.customer.name}</div>
+                        <div class="text-sm text-gray-500">${order.customer.phone}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${parseInt(order.total).toLocaleString()} FCFA
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${new Date(order.date).toLocaleDateString()}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="viewOrderDetail('${order.id}')" class="text-blue-600 hover:text-blue-900 mr-3">Voir</button>
+                    </td>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function displayCompletedOrders() {
+            const container = document.getElementById('completed-orders-list');
+            container.innerHTML = '';
+            
+            if (completedOrders.length === 0) {
+                container.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Aucune commande validée</td></tr>';
+                return;
+            }
+            
+            completedOrders.forEach(order => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${order.orderNumber || order.id.substring(0, 8)}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${order.customer.name}</div>
+                        <div class="text-sm text-gray-500">${order.customer.phone}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${parseInt(order.total).toLocaleString()} FCFA
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${new Date(order.date).toLocaleDateString()}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="generateInvoice('${order.id}')" class="text-blue-600 hover:text-blue-900">Facture</button>
+                    </td>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function displayRejectedOrders() {
+            const container = document.getElementById('rejected-orders-list');
+            container.innerHTML = '';
+            
+            if (rejectedOrders.length === 0) {
+                container.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Aucune commande rejetée</td></tr>';
+                return;
+            }
+            
+            rejectedOrders.forEach(order => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${order.orderNumber || order.id.substring(0, 8)}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${order.customer.name}</div>
+                        <div class="text-sm text-gray-500">${order.customer.phone}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${parseInt(order.total).toLocaleString()} FCFA
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${new Date(order.date).toLocaleDateString()}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="deleteOrder('${order.id}')" class="text-red-600 hover:text-red-900">Supprimer</button>
+                    </td>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function viewOrderDetail(orderId) {
+            const order = [...orders, ...completedOrders, ...rejectedOrders].find(o => o.id === orderId);
+            if (!order) return;
+            
+            currentOrder = order;
+            
+            // Fill order details
+            document.getElementById('order-detail-title').textContent = `Détails de la commande #${order.orderNumber || order.id.substring(0, 8)}`;
+            document.getElementById('customer-name').textContent = order.customer.name;
+            document.getElementById('customer-phone').textContent = order.customer.phone;
+            document.getElementById('customer-email').textContent = order.customer.email || 'Non spécifié';
+            document.getElementById('customer-address').textContent = order.customer.address;
+            document.getElementById('order-number').textContent = order.orderNumber || order.id.substring(0, 8);
+            document.getElementById('order-date').textContent = new Date(order.date).toLocaleString();
+            document.getElementById('order-status').textContent = getStatusText(order.status);
+            document.getElementById('order-total').textContent = `${parseInt(order.total).toLocaleString()} FCFA`;
+            
+            // Fill order items
+            const itemsContainer = document.getElementById('order-items');
+            itemsContainer.innerHTML = '';
+            
+            order.items.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                <img class="h-10 w-10 rounded-full" src="${item.image}" alt="${item.name}">
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${item.name}</div>
+                                <div class="text-sm text-gray-500">${item.brand || ''} ${item.model || ''}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${parseInt(item.price).toLocaleString()} FCFA
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${item.quantity}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${parseInt(item.price * item.quantity).toLocaleString()} FCFA
+                    </td>
+                `;
+                itemsContainer.appendChild(row);
+            });
+            
+            // Set up actions based on order status
+            const actionsContainer = document.getElementById('order-actions');
+            actionsContainer.innerHTML = '';
+            
+            if (order.status === 'pending') {
+                actionsContainer.innerHTML = `
+                    <button onclick="updateOrderStatus('completed')" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                        Valider la commande
+                    </button>
+                    <button onclick="updateOrderStatus('rejected')" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                        Rejeter la commande
+                    </button>
+                `;
+            } else if (order.status === 'completed') {
+                actionsContainer.innerHTML = `
+                    <button onclick="generateInvoice('${order.id}')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Générer facture
+                    </button>
+                `;
+            } else if (order.status === 'rejected') {
+                actionsContainer.innerHTML = `
+                    <button onclick="deleteOrder('${order.id}')" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                        Supprimer définitivement
+                    </button>
+                `;
+            }
+            
+            // Show modal
+            document.getElementById('order-detail-modal').classList.remove('hidden');
+        }
+
+        function closeOrderDetailModal() {
+            document.getElementById('order-detail-modal').classList.add('hidden');
+            currentOrder = null;
+        }
+
+        function updateOrderStatus(newStatus) {
+            if (!currentOrder) return;
+            
+            // Update stock if order is being completed
+            if (newStatus === 'completed') {
+                updateProductStock(currentOrder.items);
+            }
+            
+            db.collection('orders').doc(currentOrder.id).update({
+                status: newStatus,
+                updatedAt: new Date().toISOString()
+            })
+            .then(() => {
+                alert(`Commande ${newStatus === 'completed' ? 'validée' : 'rejetée'} avec succès!`);
+                closeOrderDetailModal();
+                loadOrders();
+                loadCompletedOrders();
+                loadRejectedOrders();
+                updateDashboard();
+            })
+            .catch((error) => {
+                console.error("Error updating order status: ", error);
+                alert('Erreur lors de la mise à jour du statut de la commande');
+            });
+        }
+
+        function updateProductStock(items) {
+            items.forEach(item => {
+                db.collection('products').doc(item.id).get()
+                    .then(doc => {
+                        if (doc.exists) {
+                            const currentStock = doc.data().stock;
+                            const newStock = currentStock - item.quantity;
+                            
+                            db.collection('products').doc(item.id).update({
+                                stock: newStock >= 0 ? newStock : 0
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error updating product stock: ", error);
+                    });
+            });
+        }
+
+        function deleteOrder(orderId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette commande?')) {
+                db.collection('orders').doc(orderId).delete()
+                    .then(() => {
+                        alert('Commande supprimée avec succès!');
+                        closeOrderDetailModal();
+                        loadOrders();
+                        loadCompletedOrders();
+                        loadRejectedOrders();
+                        updateDashboard();
+                    })
+                    .catch((error) => {
+                        console.error("Error deleting order: ", error);
+                        alert('Erreur lors de la suppression de la commande');
+                    });
+            }
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'pending': return 'En attente';
+                case 'completed': return 'Validée';
+                case 'rejected': return 'Rejetée';
+                default: return status;
+            }
+        }
+
+        // Invoice functions
+        function generateInvoice(orderId) {
+            const order = [...orders, ...completedOrders, ...rejectedOrders].find(o => o.id === orderId);
+            if (!order) return;
+            
+            currentInvoice = order;
+            
+            const invoiceContainer = document.getElementById('invoice-content');
+            invoiceContainer.innerHTML = `
+                <div class="flex justify-between mb-8">
+                    <div>
+                        <h1 class="text-2xl font-bold text-blue-800">ETS NIASS & FRÈRE</h1>
+                        <p class="text-gray-600">Vente de pièces détachées véhicules</p>
+                        <p class="text-gray-600">Dakar, Sénégal</p>
+                        <p class="text-gray-600">Tél: +221 77 123 45 67</p>
+                    </div>
+                    <div class="text-right">
+                        <h2 class="text-xl font-bold">FACTURE</h2>
+                        <p class="text-gray-600">N° ${order.orderNumber || order.id.substring(0, 8)}</p>
+                        <p class="text-gray-600">Date: ${new Date(order.date).toLocaleDateString()}</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-gray-50 p-4 rounded">
+                        <h3 class="font-bold mb-2">Informations client</h3>
+                        <p>${order.customer.name}</p>
+                        <p>${order.customer.phone}</p>
+                        <p>${order.customer.email || ''}</p>
+                        <p>${order.customer.address}</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded">
+                        <h3 class="font-bold mb-2">Informations commande</h3>
+                        <p><strong>Statut:</strong> ${getStatusText(order.status)}</p>
+                        <p><strong>Date:</strong> ${new Date(order.date).toLocaleString()}</p>
+                    </div>
+                </div>
+                
+                <table class="w-full mb-8">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-2">Produit</th>
+                            <th class="text-right py-2">Prix unitaire</th>
+                            <th class="text-right py-2">Quantité</th>
+                            <th class="text-right py-2">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${order.items.map(item => `
+                            <tr class="border-b">
+                                <td class="py-2">
+                                    <div class="flex items-center">
+                                        <img src="${item.image}" alt="${item.name}" class="h-10 w-10 rounded mr-2">
+                                        <div>
+                                            <p>${item.name}</p>
+                                            <p class="text-sm text-gray-500">${item.brand || ''} ${item.model || ''}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-right py-2">${parseInt(item.price).toLocaleString()} FCFA</td>
+                                <td class="text-right py-2">${item.quantity}</td>
+                                <td class="text-right py-2">${parseInt(item.price * item.quantity).toLocaleString()} FCFA</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-right font-bold py-2">Total:</td>
+                            <td class="text-right font-bold py-2">${parseInt(order.total).toLocaleString()} FCFA</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                
+                <div class="text-center text-gray-500 text-sm mt-8">
+                    <p>Merci pour votre confiance!</p>
+                    <p>ETS NIASS & FRÈRE - Dakar, Sénégal</p>
+                    <p>Tél: +221 77 123 45 67</p>
+                </div>
+            `;
+            
+            document.getElementById('invoice-modal').classList.remove('hidden');
+        }
+
+        function closeInvoiceModal() {
+            document.getElementById('invoice-modal').classList.add('hidden');
+            currentInvoice = null;
+        }
+
+        function downloadInvoice() {
+            if (!currentInvoice) return;
+            
+            const element = document.getElementById('invoice-content');
+            const opt = {
+                margin: 10,
+                filename: `Facture-${currentInvoice.orderNumber || currentInvoice.id.substring(0, 8)}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            // Generate PDF
+            html2canvas(element).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(opt.filename);
+            });
+        }
+
+        function downloadCompletedOrders() {
+            if (completedOrders.length === 0) {
+                alert('Aucune commande validée à télécharger');
+                return;
+            }
+            
+            const doc = new jsPDF();
+            let y = 20;
+            
+            // Header
+            doc.setFontSize(18);
+            doc.text('ETS NIASS & FRÈRE - Liste des commandes validées', 105, y, { align: 'center' });
+            y += 10;
+            
+            doc.setFontSize(12);
+            doc.text(`Généré le ${new Date().toLocaleDateString()}`, 105, y, { align: 'center' });
+            y += 15;
+            
+            // Table header
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('N° Commande', 20, y);
+            doc.text('Client', 60, y);
+            doc.text('Montant', 140, y);
+            doc.text('Date', 180, y);
+            y += 8;
+            
+            doc.setDrawColor(0);
+            doc.setLineWidth(0.5);
+            doc.line(20, y, 190, y);
+            y += 10;
+            
+            // Table content
+            doc.setFont(undefined, 'normal');
+            let totalRevenue = 0;
+            
+            completedOrders.forEach(order => {
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+                
+                doc.text(order.orderNumber || order.id.substring(0, 8), 20, y);
+                doc.text(order.customer.name, 60, y);
+                doc.text(`${parseInt(order.total).toLocaleString()} FCFA`, 140, y);
+                doc.text(new Date(order.date).toLocaleDateString(), 180, y);
+                y += 8;
+                
+                totalRevenue += order.total;
+            });
+            
+            // Total
+            y += 10;
+            doc.setFont(undefined, 'bold');
+            doc.text('Total des ventes:', 120, y, { align: 'right' });
+            doc.text(`${parseInt(totalRevenue).toLocaleString()} FCFA`, 180, y, { align: 'right' });
+            
+            // Save the PDF
+            doc.save(`Commandes-validées-${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+
+        // Dashboard functions
+        function updateDashboard() {
+            // Update counts
+            document.getElementById('pending-orders-count').textContent = orders.length;
+            document.getElementById('completed-orders-count').textContent = completedOrders.length;
+            
+            // Calculate total stock
+            const totalStock = products.reduce((sum, product) => sum + (parseInt(product.stock) || 0), 0);
+            document.getElementById('total-stock-count').textContent = totalStock;
+            
+            // Calculate total revenue
+            const totalRevenue = completedOrders.reduce((sum, order) => sum + (parseInt(order.total) || 0), 0);
+            document.getElementById('total-revenue').textContent = `${parseInt(totalRevenue).toLocaleString()} FCFA`;
+            
+            // Update recent orders
+            updateRecentOrders();
+            
+            // Update charts
+            updateCharts();
+        }
+
+        function updateRecentOrders() {
+            const container = document.getElementById('recent-orders');
+            container.innerHTML = '';
+            
+            const allOrders = [...orders, ...completedOrders, ...rejectedOrders]
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 5);
+            
+            if (allOrders.length === 0) {
+                container.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Aucune commande récente</td></tr>';
+                return;
+            }
+            
+            allOrders.forEach(order => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${order.orderNumber || order.id.substring(0, 8)}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${order.customer.name}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${parseInt(order.total).toLocaleString()} FCFA
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${new Date(order.date).toLocaleDateString()}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}">
+                            ${getStatusText(order.status)}
+                        </span>
+                    </td>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function getStatusColor(status) {
+            switch(status) {
+                case 'pending': return 'bg-yellow-100 text-yellow-800';
+                case 'completed': return 'bg-green-100 text-green-800';
+                case 'rejected': return 'bg-red-100 text-red-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        function updateCharts() {
+            // Sales by category chart
+            const categoryData = {};
+            completedOrders.forEach(order => {
+                order.items.forEach(item => {
+                    const category = item.category || 'Autre';
+                    categoryData[category] = (categoryData[category] || 0) + (item.price * item.quantity);
+                });
+            });
+            
+            const categoryLabels = Object.keys(categoryData);
+            const categoryValues = Object.values(categoryData);
+            
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            if (window.categoryChart) {
+                window.categoryChart.destroy();
+            }
+            
+            window.categoryChart = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: categoryLabels,
+                    datasets: [{
+                        data: categoryValues,
+                        backgroundColor: [
+                            '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
+                            '#EC4899', '#14B8A6', '#F97316', '#64748B', '#A855F7'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${parseInt(value).toLocaleString()} FCFA (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Sales over time chart (last 30 days)
+            const salesData = {};
+            const today = new Date();
+            const last30Days = new Date(today.setDate(today.getDate() - 30));
+            
+            completedOrders
+                .filter(order => new Date(order.date) >= last30Days)
+                .forEach(order => {
+                    const date = new Date(order.date).toLocaleDateString();
+                    salesData[date] = (salesData[date] || 0) + order.total;
+                });
+            
+            const salesLabels = Object.keys(salesData).sort((a, b) => new Date(a) - new Date(b));
+            const salesValues = salesLabels.map(date => salesData[date]);
+            
+            const salesCtx = document.getElementById('salesChart').getContext('2d');
+            if (window.salesChart) {
+                window.salesChart.destroy();
+            }
+            
+            window.salesChart = new Chart(salesCtx, {
+                type: 'line',
+                data: {
+                    labels: salesLabels,
+                    datasets: [{
+                        label: 'Ventes (FCFA)',
+                        data: salesValues,
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return parseInt(value).toLocaleString() + ' FCFA';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return parseInt(context.raw).toLocaleString() + ' FCFA';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+ 
