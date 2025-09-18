@@ -1203,14 +1203,14 @@ if (pageId === 'dashboard') {
             <!-- Conditions de paiement et notes -->
             <div class="grid grid-cols-2 gap-8 mt-12">
                 <div>
-                    <h3 class="font-semibold text-gray-700 mb-2">Conditions de paiement</h3>
-                    <p class="text-gray-600">Paiement à la commande</p>
-                    <p class="text-gray-600">Délai de paiement: 0 jours</p>
+                    <h3 class="font-semibold text-gray-700 mb-2"> </h3>
+                    <p class="text-gray-600"> </p>
+                    <p class="text-gray-600"> </p>
                 </div>
                 <div>
-                    <h3 class="font-semibold text-gray-700 mb-2">Remarques</h3>
-                    <p class="text-gray-600">Merci pour votre confiance !</p>
-                    <p class="text-gray-600">Pièces garanties 3 mois</p>
+                    <h3 class="font-semibold text-gray-700 mb-2"> </h3>
+                    <p class="text-gray-600"> </p>
+                    <p class="text-gray-600"> </p>
                 </div>
             </div>
 
@@ -1362,17 +1362,30 @@ if (pageId === 'dashboard') {
     
     // Payment terms and notes
     pdf.setFontSize(11);
-    pdf.text("Conditions de paiement: Paiement à la commande - Délai de paiement: 0 jours", 20, y);
+    pdf.text(" ", 20, y);
     y += 6;
-    pdf.text("Remarques: Merci pour votre confiance ! Pièces garanties 3 mois", 20, y);
+    pdf.text(" ", 20, y);
     
     y += 15;
     
-    // Footer
-    pdf.setFontSize(10);
-    pdf.text("ETS NIASS & FRÈRE - Siège social: Dakar, Sénégal - Tél: +221 77 470 47 42", 105, y, { align: 'center' });
-    y += 5;
-    pdf.text("NINEA: 004328763D0 - RC: SN-DKR-2023-AB-789", 105, y, { align: 'center' });
+  const pageHeight = pdf.internal.pageSize.getHeight(); // hauteur de la page
+const footerY = pageHeight - 25; // 30 pts au-dessus du bas de la page
+
+pdf.setFontSize(10);
+pdf.text(
+  "ETS NIASS & FRÈRE - Siège social: Dakar, Sénégal - Tél: +221 77 470 47 42",
+  pdf.internal.pageSize.getWidth() / 2, // centré horizontalement
+  footerY,
+  { align: 'center' }
+);
+
+pdf.text(
+  "NINEA: 004328763D0 - RC: SN-DKR-2023-AB-789",
+  pdf.internal.pageSize.getWidth() / 2,
+  footerY + 11, // 12 pts en dessous de la ligne précédente
+  { align: 'center' }
+);
+
     
     // Save the PDF
     pdf.save(`Facture-${order.orderNumber || order.id.substring(0, 8)}.pdf`);
@@ -1726,7 +1739,4 @@ if (pageId === 'dashboard') {
     </script>
 </body>
 </html>
-
-
-
  
