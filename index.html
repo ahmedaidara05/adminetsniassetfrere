@@ -63,6 +63,14 @@
             height: 200px;
             object-fit: contain;
         }
+      /* Solution plus radicale pour le PDF */
+.pdf-content {
+    font-feature-settings: "tnum" 1;
+}
+
+.pdf-content * {
+    letter-spacing: -0.5px;
+}
     </style>
 </head>
 <body class="bg-gray-50">
@@ -1222,10 +1230,15 @@ if (pageId === 'dashboard') {
             currentInvoice = null;
         }
 
-       function downloadInvoice() {
+    function downloadInvoice() {
     if (!currentInvoice) return;
     
     const order = currentInvoice;
+    
+    // Fonction pour formater les nombres sans /
+    function formatNumber(number) {
+        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    }
     
     // Create a new jsPDF instance
     const pdf = new jsPDF('p', 'mm', 'a4');
@@ -1318,11 +1331,9 @@ if (pageId === 'dashboard') {
         const rowHeight = Math.max(10, splitName.length * 7);
         
         pdf.text(splitName, 20, y + 5);
-        pdf.text(`${parseInt(item.price).toLocaleString('fr-FR')} FCFA`, 110, y + 5, { align: 'right' });
-
+        pdf.text(`${formatNumber(parseInt(item.price))} FCFA`, 110, y + 5, { align: 'right' });
         pdf.text(`${item.quantity}`, 140, y + 5, { align: 'right' });
-        pdf.text(`${parseInt(item.price * item.quantity).toLocaleString('fr-FR')} FCFA`, 180, y + 5, { align: 'right' });
-
+        pdf.text(`${formatNumber(parseInt(item.price * item.quantity))} FCFA`, 180, y + 5, { align: 'right' });
         
         y += rowHeight;
         
@@ -1337,18 +1348,15 @@ if (pageId === 'dashboard') {
     // Totals
     pdf.setFont(undefined, 'bold');
     pdf.text("Sous-total:", 140, y, { align: 'right' });
-    pdf.text(`${parseInt(order.total).toLocaleString('fr-FR')} FCFA`, 180, y, { align: 'right' });
-
+    pdf.text(`${formatNumber(parseInt(order.total))} FCFA`, 180, y, { align: 'right' });
     
     y += 7;
     pdf.text("TVA (0%):", 140, y, { align: 'right' });
     pdf.text("0 FCFA", 180, y, { align: 'right' });
     
     y += 7;
-   pdf.text("Total:", 140, y, { align: 'right' });
-pdf.text(`${parseInt(order.total).toLocaleString()} FCFA`, 180, y, { align: 'right' });
     pdf.text("Total:", 140, y, { align: 'right' });
-    pdf.text(`${parseInt(order.total).toLocaleString()} FCFA`, 180, y, { align: 'right' });
+    pdf.text(`${formatNumber(parseInt(order.total))} FCFA`, 180, y, { align: 'right' });
     
     y += 15;
     
@@ -1718,4 +1726,7 @@ pdf.text(`${parseInt(order.total).toLocaleString()} FCFA`, 180, y, { align: 'rig
     </script>
 </body>
 </html>
+
+
+
  
