@@ -1108,77 +1108,91 @@ if (pageId === 'dashboard') {
             currentInvoice = order;
             
             const invoiceContainer = document.getElementById('invoice-content');
-            invoiceContainer.innerHTML = `
-                <div class="flex justify-between mb-8">
-                    <div>
-                        <h1 class="text-2xl font-bold text-blue-800">ETS NIASS & FRÈRE</h1>
-                        <p class="text-gray-600">Vente de pièces détachées véhicules</p>
-                        <p class="text-gray-600">Dakar, Sénégal</p>
-                        <p class="text-gray-600">Tél: +221 77 123 45 67</p>
-                    </div>
-                    <div class="text-right">
-                        <h2 class="text-xl font-bold">FACTURE</h2>
-                        <p class="text-gray-600">N° ${order.orderNumber || order.id.substring(0, 8)}</p>
-                        <p class="text-gray-600">Date: ${new Date(order.date).toLocaleDateString()}</p>
-                    </div>
+        invoiceContainer.innerHTML = `
+    <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 relative">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8 border-b pb-4">
+            <div class="flex items-center space-x-4">
+                <img src="https://i.postimg.cc/3JBCwW1J/5913292883186796968-1.jpg" 
+                     alt="Logo ETS NIASS" class="h-16 w-16 object-cover rounded-full border shadow">
+                <div>
+                    <h1 class="text-2xl font-extrabold text-blue-800">ETS NIASS & FRÈRE</h1>
+                    <p class="text-gray-600 text-sm">Vente de pièces détachées véhicules</p>
+                    <p class="text-gray-600 text-sm">Dakar, Sénégal</p>
+                    <p class="text-gray-600 text-sm">Tél: +221 77 123 45 67</p>
                 </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                    <div class="bg-gray-50 p-4 rounded">
-                        <h3 class="font-bold mb-2">Informations client</h3>
-                        <p>${order.customer.name}</p>
-                        <p>${order.customer.phone}</p>
-                        <p>${order.customer.email || ''}</p>
-                        <p>${order.customer.address}</p>
-                    </div>
-                    <div class="bg-gray-50 p-4 rounded">
-                        <h3 class="font-bold mb-2">Informations commande</h3>
-                        <p><strong>Statut:</strong> ${getStatusText(order.status)}</p>
-                        <p><strong>Date:</strong> ${new Date(order.date).toLocaleString()}</p>
-                    </div>
-                </div>
-                
-                <table class="w-full mb-8">
-                    <thead>
-                        <tr class="border-b">
-                            <th class="text-left py-2">Produit</th>
-                            <th class="text-right py-2">Prix unitaire</th>
-                            <th class="text-right py-2">Quantité</th>
-                            <th class="text-right py-2">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${order.items.map(item => `
-                            <tr class="border-b">
-                                <td class="py-2">
-                                    <div class="flex items-center">
-                                        <img src="${item.image}" alt="${item.name}" class="h-10 w-10 rounded mr-2">
-                                        <div>
-                                            <p>${item.name}</p>
-                                            <p class="text-sm text-gray-500">${item.brand || ''} ${item.model || ''}</p>
-                                        </div>
+            </div>
+            <div class="text-right">
+                <h2 class="text-xl font-bold text-gray-800">FACTURE</h2>
+                <p class="text-gray-600">N° <span class="font-mono">${order.orderNumber || order.id.substring(0, 8)}</span></p>
+                <p class="text-gray-600">Date: ${new Date(order.date).toLocaleDateString()}</p>
+            </div>
+        </div>
+
+        <!-- Infos client & commande -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-gray-50 p-4 rounded-lg shadow-sm border">
+                <h3 class="font-bold mb-2 text-gray-700"> Informations client</h3>
+                <p class="font-medium">${order.customer.name}</p>
+                <p>${order.customer.phone}</p>
+                <p>${order.customer.email || ''}</p>
+                <p>${order.customer.address}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg shadow-sm border">
+                <h3 class="font-bold mb-2 text-gray-700"> Informations commande</h3>
+                <p><strong>Statut:</strong> <span class="text-blue-700">${getStatusText(order.status)}</span></p>
+                <p><strong>Date:</strong> ${new Date(order.date).toLocaleString()}</p>
+            </div>
+        </div>
+
+        <!-- Table des produits -->
+        <div class="overflow-x-auto">
+            <table class="w-full mb-16 border-collapse">
+                <thead class="bg-blue-50">
+                    <tr class="border-b border-gray-300">
+                        <th class="text-left py-3 px-2 text-gray-700">Produit</th>
+                        <th class="text-right py-3 px-2 text-gray-700">Prix unitaire</th>
+                        <th class="text-right py-3 px-2 text-gray-700">Quantité</th>
+                        <th class="text-right py-3 px-2 text-gray-700">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${order.items.map(item => `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="py-3 px-2">
+                                <div class="flex items-center">
+                                    <img src="${item.image}" alt="${item.name}" class="h-12 w-12 rounded border mr-3">
+                                    <div>
+                                        <p class="font-medium">${item.name}</p>
+                                        <p class="text-sm text-gray-500">${item.brand || ''} ${item.model || ''}</p>
                                     </div>
-                                </td>
-                                <td class="text-right py-2">${parseInt(item.price).toLocaleString()} FCFA</td>
-                                <td class="text-right py-2">${item.quantity}</td>
-                                <td class="text-right py-2">${parseInt(item.price * item.quantity).toLocaleString()} FCFA</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="3" class="text-right font-bold py-2">Total:</td>
-                            <td class="text-right font-bold py-2">${parseInt(order.total).toLocaleString()} FCFA</td>
+                                </div>
+                            </td>
+                            <td class="text-right py-3 px-2">${parseInt(item.price).toLocaleString()} FCFA</td>
+                            <td class="text-right py-3 px-2">${item.quantity}</td>
+                            <td class="text-right py-3 px-2 font-semibold">${parseInt(item.price * item.quantity).toLocaleString()} FCFA</td>
                         </tr>
-                    </tfoot>
-                </table>
-                
-                <div class="text-center text-gray-500 text-sm mt-8">
-                    <p>Merci pour votre confiance!</p>
-                    <p>ETS NIASS & FRÈRE - Dakar, Sénégal</p>
-                    <p>Tél: +221 77 123 45 67</p>
-                </div>
-            `;
+                    `).join('')}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-right font-bold py-3 px-2 text-gray-800">Total:</td>
+                        <td class="text-right font-bold py-3 px-2 text-blue-800">${parseInt(order.total).toLocaleString()} FCFA</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Footer fixe -->
+        <div class="absolute bottom-0 left-0 w-full text-center bg-gray-100 border-t py-4 text-gray-600 text-sm">
+            <p class="font-medium">Merci pour votre confiance !</p>
+            <p>ETS NIASS & FRÈRE - Dakar, Sénégal</p>
+            <p>Tél: +221 77 470 47 42</p>
+        </div>
+    </div>
+`;
+
+
             
             document.getElementById('invoice-modal').classList.remove('hidden');
         }
