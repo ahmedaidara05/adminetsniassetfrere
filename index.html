@@ -1101,131 +1101,274 @@ if (pageId === 'dashboard') {
         }
 
         // Invoice functions
-        function generateInvoice(orderId) {
-            const order = [...orders, ...completedOrders, ...rejectedOrders].find(o => o.id === orderId);
-            if (!order) return;
-            
-            currentInvoice = order;
-            
-            const invoiceContainer = document.getElementById('invoice-content');
-        invoiceContainer.innerHTML = `
-    <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 relative">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-8 border-b pb-4">
-            <div class="flex items-center space-x-4">
-                <img src="https://i.postimg.cc/3JBCwW1J/5913292883186796968-1.jpg" 
-                     alt="Logo ETS NIASS" class="h-16 w-16 object-cover rounded-full border shadow">
-                <div>
-                    <h1 class="text-2xl font-extrabold text-blue-800">ETS NIASS & FRÈRE</h1>
-                    <p class="text-gray-600 text-sm">Vente de pièces détachées véhicules</p>
-                    <p class="text-gray-600 text-sm">Dakar, Sénégal</p>
-                    <p class="text-gray-600 text-sm">Tél: +221 77 123 45 67</p>
+      function generateInvoice(orderId) {
+    const order = [...orders, ...completedOrders, ...rejectedOrders].find(o => o.id === orderId);
+    if (!order) return;
+    
+    currentInvoice = order;
+    
+    const invoiceContainer = document.getElementById('invoice-content');
+    invoiceContainer.innerHTML = `
+        <div class="bg-white p-8 rounded-lg border border-gray-200" style="max-width: 800px; margin: 0 auto;">
+            <!-- En-tête avec logo et informations de l'entreprise -->
+            <div class="flex justify-between items-start mb-8 border-b pb-6">
+                <div class="flex items-center">
+                    <img src="https://i.postimg.cc/3JBCwW1J/5913292883186796968-1.jpg" 
+                         alt="Logo ETS NIASS" class="h-20 w-20 object-contain mr-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-blue-800">ETS NIASS & FRÈRE</h1>
+                        <p class="text-gray-600">Vente de pièces détachées véhicules</p>
+                        <p class="text-gray-600">Dakar, Sénégal</p>
+                        <p class="text-gray-600">Tél: +221 77 470 47 42</p>
+                        <p class="text-gray-600">Email: contact@etsniass.sn</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <h2 class="text-xl font-bold text-gray-800">FACTURE</h2>
+                    <p class="text-gray-600">N°: <span class="font-mono">${order.orderNumber || order.id.substring(0, 8)}</span></p>
+                    <p class="text-gray-600">Date: ${new Date(order.date).toLocaleDateString()}</p>
                 </div>
             </div>
-            <div class="text-right">
-                <h2 class="text-xl font-bold text-gray-800">FACTURE</h2>
-                <p class="text-gray-600">N° <span class="font-mono">${order.orderNumber || order.id.substring(0, 8)}</span></p>
-                <p class="text-gray-600">Date: ${new Date(order.date).toLocaleDateString()}</p>
-            </div>
-        </div>
 
-        <!-- Infos client & commande -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-gray-50 p-4 rounded-lg shadow-sm border">
-                <h3 class="font-bold mb-2 text-gray-700"> Informations client</h3>
-                <p class="font-medium">${order.customer.name}</p>
-                <p>${order.customer.phone}</p>
-                <p>${order.customer.email || ''}</p>
-                <p>${order.customer.address}</p>
+            <!-- Informations client et entreprise -->
+            <div class="grid grid-cols-2 gap-8 mb-8">
+                <div>
+                    <h3 class="font-semibold text-gray-700 mb-2">Informations de l'entreprise</h3>
+                    <p class="text-gray-600">ETS NIASS & FRÈRE</p>
+                    <p class="text-gray-600">Adresse: Dakar, Sénégal</p>
+                    <p class="text-gray-600">Tél: +221 77 470 47 42</p>
+                    <p class="text-gray-600">NINEA: 004328763D0</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-gray-700 mb-2">Facturé à</h3>
+                    <p class="text-gray-800 font-medium">${order.customer.name}</p>
+                    <p class="text-gray-600">${order.customer.phone}</p>
+                    <p class="text-gray-600">${order.customer.email || ''}</p>
+                    <p class="text-gray-600">${order.customer.address}</p>
+                </div>
             </div>
-            <div class="bg-gray-50 p-4 rounded-lg shadow-sm border">
-                <h3 class="font-bold mb-2 text-gray-700"> Informations commande</h3>
-                <p><strong>Statut:</strong> <span class="text-blue-700">${getStatusText(order.status)}</span></p>
-                <p><strong>Date:</strong> ${new Date(order.date).toLocaleString()}</p>
-            </div>
-        </div>
 
-        <!-- Table des produits -->
-        <div class="overflow-x-auto">
-            <table class="w-full mb-16 border-collapse">
-                <thead class="bg-blue-50">
-                    <tr class="border-b border-gray-300">
-                        <th class="text-left py-3 px-2 text-gray-700">Produit</th>
-                        <th class="text-right py-3 px-2 text-gray-700">Prix unitaire</th>
-                        <th class="text-right py-3 px-2 text-gray-700">Quantité</th>
-                        <th class="text-right py-3 px-2 text-gray-700">Total</th>
+            <!-- Détails de la facture -->
+            <table class="w-full mb-8 border-collapse">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="text-left py-3 px-4 border border-gray-300 font-semibold text-gray-700">Description</th>
+                        <th class="text-right py-3 px-4 border border-gray-300 font-semibold text-gray-700">Prix unitaire</th>
+                        <th class="text-right py-3 px-4 border border-gray-300 font-semibold text-gray-700">Quantité</th>
+                        <th class="text-right py-3 px-4 border border-gray-300 font-semibold text-gray-700">Total</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${order.items.map(item => `
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="py-3 px-2">
+                        <tr>
+                            <td class="py-3 px-4 border border-gray-300">
                                 <div class="flex items-center">
-                                    <img src="${item.image}" alt="${item.name}" class="h-12 w-12 rounded border mr-3">
+                                    <img src="${item.image}" alt="${item.name}" class="h-10 w-10 object-contain mr-3 rounded">
                                     <div>
-                                        <p class="font-medium">${item.name}</p>
+                                        <p class="font-medium text-gray-800">${item.name}</p>
                                         <p class="text-sm text-gray-500">${item.brand || ''} ${item.model || ''}</p>
                                     </div>
                                 </div>
                             </td>
-                            <td class="text-right py-3 px-2">${parseInt(item.price).toLocaleString()} FCFA</td>
-                            <td class="text-right py-3 px-2">${item.quantity}</td>
-                            <td class="text-right py-3 px-2 font-semibold">${parseInt(item.price * item.quantity).toLocaleString()} FCFA</td>
+                            <td class="py-3 px-4 border border-gray-300 text-right">${parseInt(item.price).toLocaleString()} FCFA</td>
+                            <td class="py-3 px-4 border border-gray-300 text-right">${item.quantity}</td>
+                            <td class="py-3 px-4 border border-gray-300 text-right font-medium">${parseInt(item.price * item.quantity).toLocaleString()} FCFA</td>
                         </tr>
                     `).join('')}
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="3" class="text-right font-bold py-3 px-2 text-gray-800">Total:</td>
-                        <td class="text-right font-bold py-3 px-2 text-blue-800">${parseInt(order.total).toLocaleString()} FCFA</td>
+                        <td colspan="3" class="py-3 px-4 border border-gray-300 text-right font-semibold bg-gray-50">Sous-total:</td>
+                        <td class="py-3 px-4 border border-gray-300 text-right bg-gray-50">${parseInt(order.total).toLocaleString()} FCFA</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="py-3 px-4 border border-gray-300 text-right font-semibold">TVA (0%):</td>
+                        <td class="py-3 px-4 border border-gray-300 text-right">0 FCFA</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="py-3 px-4 border border-gray-300 text-right font-semibold bg-blue-50 text-blue-800">Total:</td>
+                        <td class="py-3 px-4 border border-gray-300 text-right font-bold text-blue-800 bg-blue-50">${parseInt(order.total).toLocaleString()} FCFA</td>
                     </tr>
                 </tfoot>
             </table>
+
+            <!-- Conditions de paiement et notes -->
+            <div class="grid grid-cols-2 gap-8 mt-12">
+                <div>
+                    <h3 class="font-semibold text-gray-700 mb-2">Conditions de paiement</h3>
+                    <p class="text-gray-600">Paiement à la commande</p>
+                    <p class="text-gray-600">Délai de paiement: 0 jours</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-gray-700 mb-2">Remarques</h3>
+                    <p class="text-gray-600">Merci pour votre confiance !</p>
+                    <p class="text-gray-600">Pièces garanties 3 mois</p>
+                </div>
+            </div>
+
+            <!-- Pied de page -->
+            <div class="mt-12 pt-6 border-t border-gray-300 text-center text-gray-500 text-sm">
+                <p>ETS NIASS & FRÈRE - Siège social: Dakar, Sénégal - Tél: +221 77 470 47 42</p>
+                <p>NINEA: 004328763D0 - RC: SN-DKR-2023-AB-789</p>
+            </div>
         </div>
-
-        <!-- Footer fixe -->
-        <div class="absolute bottom-0 left-0 w-full text-center bg-gray-100 border-t py-4 text-gray-600 text-sm">
-            <p class="font-medium">Merci pour votre confiance !</p>
-            <p>ETS NIASS & FRÈRE - Dakar, Sénégal</p>
-            <p>Tél: +221 77 470 47 42</p>
-        </div>
-    </div>
-`;
-
-
-            
-            document.getElementById('invoice-modal').classList.remove('hidden');
-        }
+    `;
+    
+    document.getElementById('invoice-modal').classList.remove('hidden');
+}
 
         function closeInvoiceModal() {
             document.getElementById('invoice-modal').classList.add('hidden');
             currentInvoice = null;
         }
 
-        function downloadInvoice() {
-            if (!currentInvoice) return;
-            
-            const element = document.getElementById('invoice-content');
-            const opt = {
-                margin: 10,
-                filename: `Facture-${currentInvoice.orderNumber || currentInvoice.id.substring(0, 8)}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            
-            // Generate PDF
-            html2canvas(element).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgProps = pdf.getImageProperties(imgData);
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save(opt.filename);
-            });
+       function downloadInvoice() {
+    if (!currentInvoice) return;
+    
+    const order = currentInvoice;
+    
+    // Create a new jsPDF instance
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    
+    // Set initial coordinates
+    let y = 20;
+    
+    // Add logo (if available)
+    try {
+        pdf.addImage("https://i.postimg.cc/3JBCwW1J/5913292883186796968-1.jpg", "JPEG", 15, 15, 30, 30);
+    } catch (e) {
+        console.log("Logo not available, continuing without it");
+    }
+    
+    // Company information
+    pdf.setFontSize(18);
+    pdf.setFont(undefined, 'bold');
+    pdf.text("ETS NIASS & FRÈRE", 110, 20, { align: 'center' });
+    
+    pdf.setFontSize(12);
+    pdf.setFont(undefined, 'normal');
+    pdf.text("Vente de pièces détachées véhicules", 110, 27, { align: 'center' });
+    pdf.text("Dakar, Sénégal - Tél: +221 77 470 47 42", 110, 32, { align: 'center' });
+    
+    // Invoice title and number
+    pdf.setFontSize(16);
+    pdf.setFont(undefined, 'bold');
+    pdf.text("FACTURE", 160, 20);
+    
+    pdf.setFontSize(10);
+    pdf.setFont(undefined, 'normal');
+    pdf.text(`N°: ${order.orderNumber || order.id.substring(0, 8)}`, 160, 27);
+    pdf.text(`Date: ${new Date(order.date).toLocaleDateString()}`, 160, 32);
+    
+    // Draw line separator
+    y = 45;
+    pdf.line(15, y, 195, y);
+    y += 15;
+    
+    // Company and client information
+    pdf.setFontSize(12);
+    pdf.setFont(undefined, 'bold');
+    pdf.text("Informations de l'entreprise:", 20, y);
+    pdf.text("Facturé à:", 110, y);
+    
+    y += 7;
+    pdf.setFont(undefined, 'normal');
+    pdf.text("ETS NIASS & FRÈRE", 20, y);
+    pdf.text(order.customer.name, 110, y);
+    
+    y += 6;
+    pdf.text("Dakar, Sénégal", 20, y);
+    pdf.text(order.customer.phone, 110, y);
+    
+    y += 6;
+    pdf.text("Tél: +221 77 470 47 42", 20, y);
+    pdf.text(order.customer.email || "", 110, y);
+    
+    y += 6;
+    pdf.text("NINEA: 004328763D0", 20, y);
+    pdf.text(order.customer.address, 110, y);
+    
+    y += 15;
+    
+    // Table header
+    pdf.setFillColor(240, 240, 240);
+    pdf.rect(15, y, 180, 10, 'F');
+    
+    pdf.setFont(undefined, 'bold');
+    pdf.text("Description", 20, y + 7);
+    pdf.text("Prix unitaire", 110, y + 7, { align: 'right' });
+    pdf.text("Quantité", 140, y + 7, { align: 'right' });
+    pdf.text("Total", 180, y + 7, { align: 'right' });
+    
+    y += 10;
+    
+    // Table rows
+    pdf.setFont(undefined, 'normal');
+    order.items.forEach(item => {
+        if (y > 250) {
+            pdf.addPage();
+            y = 20;
         }
+        
+        // Product name (with line wrapping)
+        const productName = `${item.name} ${item.brand || ''} ${item.model || ''}`;
+        const splitName = pdf.splitTextToSize(productName, 70);
+        
+        // Calculate row height based on text
+        const rowHeight = Math.max(10, splitName.length * 7);
+        
+        pdf.text(splitName, 20, y + 5);
+        pdf.text(`${parseInt(item.price).toLocaleString('fr-FR')} FCFA`, 110, y + 5, { align: 'right' });
+
+        pdf.text(`${item.quantity}`, 140, y + 5, { align: 'right' });
+        pdf.text(`${parseInt(item.price * item.quantity).toLocaleString('fr-FR')} FCFA`, 180, y + 5, { align: 'right' });
+
+        
+        y += rowHeight;
+        
+        // Draw line separator between items
+        pdf.line(15, y, 195, y);
+    });
+    
+    // Draw bottom line of the table
+    pdf.line(15, y, 195, y);
+    y += 10;
+    
+    // Totals
+    pdf.setFont(undefined, 'bold');
+    pdf.text("Sous-total:", 140, y, { align: 'right' });
+    pdf.text(`${parseInt(order.total).toLocaleString('fr-FR')} FCFA`, 180, y, { align: 'right' });
+
+    
+    y += 7;
+    pdf.text("TVA (0%):", 140, y, { align: 'right' });
+    pdf.text("0 FCFA", 180, y, { align: 'right' });
+    
+    y += 7;
+   pdf.text("Total:", 140, y, { align: 'right' });
+pdf.text(`${parseInt(order.total).toLocaleString()} FCFA`, 180, y, { align: 'right' });
+    pdf.text("Total:", 140, y, { align: 'right' });
+    pdf.text(`${parseInt(order.total).toLocaleString()} FCFA`, 180, y, { align: 'right' });
+    
+    y += 15;
+    
+    // Payment terms and notes
+    pdf.setFontSize(11);
+    pdf.text("Conditions de paiement: Paiement à la commande - Délai de paiement: 0 jours", 20, y);
+    y += 6;
+    pdf.text("Remarques: Merci pour votre confiance ! Pièces garanties 3 mois", 20, y);
+    
+    y += 15;
+    
+    // Footer
+    pdf.setFontSize(10);
+    pdf.text("ETS NIASS & FRÈRE - Siège social: Dakar, Sénégal - Tél: +221 77 470 47 42", 105, y, { align: 'center' });
+    y += 5;
+    pdf.text("NINEA: 004328763D0 - RC: SN-DKR-2023-AB-789", 105, y, { align: 'center' });
+    
+    // Save the PDF
+    pdf.save(`Facture-${order.orderNumber || order.id.substring(0, 8)}.pdf`);
+}
 
         function downloadCompletedOrders() {
             if (completedOrders.length === 0) {
