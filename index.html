@@ -78,7 +78,7 @@
     <div class="sidebar fixed left-0 top-0 bottom-0 w-64 bg-blue-800 text-white shadow-lg z-10">
         <div class="p-4 flex items-center justify-between border-b border-blue-700">
             <div class="flex items-center">
-                <img src="https://via.placeholder.com/50" alt="Logo" class="h-10 w-10 rounded-full">
+                <img src="https://i.postimg.cc/85RsLkrb/LOGO.png" alt="Logo" class="h-10 w-10 rounded-full">
                 <span class="logo-text ml-3 font-bold text-xl">ETS NIASS & FRÈRE</span>
             </div>
             <button onclick="toggleSidebar()" class="text-white focus:outline-none">
@@ -1153,7 +1153,7 @@ if (pageId === 'dashboard') {
             <!-- En-tête avec logo et informations de l'entreprise -->
             <div class="flex justify-between items-start mb-8 border-b pb-6">
                 <div class="flex items-center">
-                    <img src="https://i.postimg.cc/3JBCwW1J/5913292883186796968-1.jpg" 
+                    <img src="https://i.postimg.cc/85RsLkrb/LOGO.png" 
                          alt="Logo ETS NIASS" class="h-20 w-20 object-contain mr-4">
                     <div>
                         <h1 class="text-2xl font-bold text-blue-800">ETS NIASS & FRÈRE</h1>
@@ -1274,7 +1274,7 @@ if (pageId === 'dashboard') {
     
     // Add logo (if available)
     try {
-        pdf.addImage("https://i.postimg.cc/3JBCwW1J/5913292883186796968-1.jpg", "JPEG", 15, 15, 30, 30);
+        pdf.addImage("https://i.postimg.cc/85RsLkrb/LOGO.png", "JPEG", 15, 15, 30, 30);
     } catch (e) {
         console.log("Logo not available, continuing without it");
     }
@@ -1282,12 +1282,12 @@ if (pageId === 'dashboard') {
     // Company information
     pdf.setFontSize(18);
     pdf.setFont(undefined, 'bold');
-    pdf.text("ETS NIASS & FRÈRE", 110, 20, { align: 'center' });
+    pdf.text(" ", 110, 20, { align: 'center' });
     
     pdf.setFontSize(12);
     pdf.setFont(undefined, 'normal');
-    pdf.text("Vente de pièces détachées véhicules", 110, 27, { align: 'center' });
-    pdf.text("Dakar, Sénégal - Tél: +221 77 470 47 42", 110, 32, { align: 'center' });
+    pdf.text(" ", 110, 27, { align: 'center' });
+    pdf.text(" ", 110, 32, { align: 'center' });
     
     // Invoice title and number
     pdf.setFontSize(16);
