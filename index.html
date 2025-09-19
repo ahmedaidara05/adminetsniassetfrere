@@ -503,6 +503,51 @@
         let rejectedOrders = [];
         let currentOrder = null;
         let currentInvoice = null;
+// Ajoutez ce code dans votre section <script>, de préférence au début après l'initialisation des variables globales
+
+let inactivityTimer;
+
+function resetInactivityTimer() {
+    // Clear existing timer
+    clearTimeout(inactivityTimer);
+    
+    // Set new timer for 5 minutes (300000 milliseconds)
+    inactivityTimer = setTimeout(() => {
+        // Check if we're not in the middle of an operation (modal open, form editing, etc.)
+        if (!isUserActive()) {
+            location.reload(); // Refresh the page
+        }
+    }, 43200000); // 5 minutes = 300000 milliseconds
+}
+
+function isUserActive() {
+    // Check if any modal is open
+    if (!document.getElementById('order-detail-modal').classList.contains('hidden') ||
+        !document.getElementById('invoice-modal').classList.contains('hidden')) {
+        return true;
+    }
+    
+    // Check if we're on the add/edit product page with a form partially filled
+    if (document.getElementById('add-product').classList.contains('hidden') === false && 
+        document.getElementById('product-form').checkValidity()) {
+        return true;
+    }
+    
+    return false;
+}
+
+// Setup event listeners to track user activity
+function setupActivityListeners() {
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    
+    events.forEach(event => {
+        document.addEventListener(event, resetInactivityTimer, true);
+    });
+    
+    // Initialize the timer
+    resetInactivityTimer();
+}
+
 
         // Initialize the app when DOM is loaded
       document.addEventListener('DOMContentLoaded', function() {
@@ -529,6 +574,8 @@
     
     // Show dashboard by default
     showPage('dashboard');
+            setupActivityListeners(); // Ajoutez cette ligne
+
 });
 
         // Navigation functions
@@ -575,6 +622,7 @@ if (pageId === 'dashboard') {
         function checkAuth() {
             // Implement your own authentication check
             // For demo purposes, we'll assume user is always authenticated
+          
         }
 
         function logout() {
@@ -1140,13 +1188,7 @@ if (pageId === 'dashboard') {
 
             <!-- Informations client et entreprise -->
             <div class="grid grid-cols-2 gap-8 mb-8">
-                <div>
-                    <h3 class="font-semibold text-gray-700 mb-2">Informations de l'entreprise</h3>
-                    <p class="text-gray-600">ETS NIASS & FRÈRE</p>
-                    <p class="text-gray-600">Adresse: Dakar, Sénégal</p>
-                    <p class="text-gray-600">Tél: +221 77 470 47 42</p>
-                    <p class="text-gray-600">NINEA: 004328763D0</p>
-                </div>
+              
                 <div>
                     <h3 class="font-semibold text-gray-700 mb-2">Facturé à</h3>
                     <p class="text-gray-800 font-medium">${order.customer.name}</p>
@@ -1278,30 +1320,25 @@ if (pageId === 'dashboard') {
     pdf.line(15, y, 195, y);
     y += 15;
     
-    // Company and client information
-    pdf.setFontSize(12);
-    pdf.setFont(undefined, 'bold');
-    pdf.text("Informations de l'entreprise:", 20, y);
-    pdf.text("Facturé à:", 110, y);
-    
-    y += 7;
-    pdf.setFont(undefined, 'normal');
-    pdf.text("ETS NIASS & FRÈRE", 20, y);
-    pdf.text(order.customer.name, 110, y);
-    
-    y += 6;
-    pdf.text("Dakar, Sénégal", 20, y);
-    pdf.text(order.customer.phone, 110, y);
-    
-    y += 6;
-    pdf.text("Tél: +221 77 470 47 42", 20, y);
-    pdf.text(order.customer.email || "", 110, y);
-    
-    y += 6;
-    pdf.text("NINEA: 004328763D0", 20, y);
-    pdf.text(order.customer.address, 110, y);
-    
-    y += 15;
+// Client information only (left side)
+pdf.setFontSize(12);
+pdf.setFont(undefined, 'bold');
+pdf.text("Facturé à:", 20, y);
+
+y += 7;
+pdf.setFont(undefined, 'normal');
+pdf.text(order.customer.name, 20, y);
+
+y += 6;
+pdf.text(order.customer.phone, 20, y);
+
+y += 6;
+pdf.text(order.customer.email || "", 20, y);
+
+y += 6;
+pdf.text(order.customer.address, 20, y);
+
+y += 15;
     
     // Table header
     pdf.setFillColor(240, 240, 240);
