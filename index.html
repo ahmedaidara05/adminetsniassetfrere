@@ -1274,7 +1274,7 @@ if (pageId === 'dashboard') {
     
     // Add logo (if available)
     try {
-        pdf.addImage("https://i.postimg.cc/85RsLkrb/LOGO.png", "JPEG", 15, 15, 30, 30);
+        pdf.addImage("https://i.postimg.cc/85RsLkrb/LOGO.png", "JPEG", 15, 6, 42, 42);
     } catch (e) {
         console.log("Logo not available, continuing without it");
     }
@@ -1328,7 +1328,8 @@ y += 15;
     pdf.setFillColor(240, 240, 240);
     pdf.rect(15, y, 180, 10, 'F');
     
-    pdf.setFont(undefined, 'bold');
+    pdf.setFont(undefined, 'normal');
+
     pdf.text("Description", 20, y + 7);
     pdf.text("Prix unitaire", 110, y + 7, { align: 'right' });
     pdf.text("Quantité", 140, y + 7, { align: 'right' });
