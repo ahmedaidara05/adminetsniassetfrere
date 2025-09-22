@@ -1190,10 +1190,8 @@ if (pageId === 'dashboard') {
                          alt="Logo ETS NIASS" class="h-20 w-20 object-contain mr-4">
                     <div>
                         <h1 class="text-2xl font-bold text-blue-800">ETS NIASS & FRÈRE</h1>
-                        <p class="text-gray-600">Vente de pièces détachées véhicules</p>
-                        <p class="text-gray-600">Dakar, Sénégal</p>
-                        <p class="text-gray-600">Tél: +221 77 470 47 42</p>
-                        <p class="text-gray-600">Email: contact@etsniass.sn</p>
+                        <p class="text-gray-600">Réparation – Pièces détachées
+Vente & Location de véhicules</p>
                     </div>
                 </div>
                 <div class="text-right">
@@ -1275,8 +1273,8 @@ if (pageId === 'dashboard') {
 
             <!-- Pied de page -->
             <div class="mt-12 pt-6 border-t border-gray-300 text-center text-gray-500 text-sm">
-                <p>ETS NIASS & FRÈRE - Siège social: Dakar, Sénégal - Tél: +221 77 470 47 42</p>
-                <p>NINEA: 004328763D0 - RC: SN-DKR-2023-AB-789</p>
+                <p>Route de Sangalkam près de la station de pesage - Sénégal</p>
+                <p>CPTE: CORISBANK SN213 01018 005058724101 42 - NINEA: 004119964 - RCCM: SN THS 2009.A.2320</p>
             </div>
         </div>
     `;
@@ -1426,21 +1424,27 @@ y += 15;
   const pageHeight = pdf.internal.pageSize.getHeight(); // hauteur de la page
 const footerY = pageHeight - 25; // 30 pts au-dessus du bas de la page
 
-pdf.setFontSize(10);
+pdf.setFontSize(8);
 pdf.text(
-  "ETS NIASS & FRÈRE - Siège social: Dakar, Sénégal - Tél: +221 77 470 47 42",
+  "Route de Sangalkam près de la station de pesage - Sénégal",
   pdf.internal.pageSize.getWidth() / 2, // centré horizontalement
   footerY,
   { align: 'center' }
 );
 
 pdf.text(
-  "NINEA: 004328763D0 - RC: SN-DKR-2023-AB-789",
+  "Tel: +221 70 878 19 89 - 77 470 47 42 / Email: etsiniasseetfreres@yahoo.com",
   pdf.internal.pageSize.getWidth() / 2,
-  footerY + 11, // 12 pts en dessous de la ligne précédente
+  footerY + 7, // 12 pts en dessous de la ligne précédente
   { align: 'center' }
 );
-
+// 3ème ligne ajoutée
+pdf.text(
+  "CPTE: CORISBANK SN213 01018 005058724101 42 - NINEA: 004119964 - RCCM: SN THS 2009.A.2320",
+  pdf.internal.pageSize.getWidth() / 2,
+  footerY + 13, // encore 11 pts en dessous
+  { align: 'center' }
+);
     
     // Save the PDF
     pdf.save(`Facture-${order.orderNumber || order.id.substring(0, 8)}.pdf`);
